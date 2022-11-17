@@ -1,0 +1,117 @@
+﻿@using CovidTrackerUi.Controllers;
+@model MainPageViewModel
+
+@{
+	ViewData["Title"] = "Home Page";
+}
+
+<div class="row">
+	<table class="table table-striped table-hover table-sm">
+		<thead>
+			<tr>
+				<th style="width: 25%">
+					Date (Jan 13, 2020 - Mar 7, 2021)
+					@using (Html.BeginForm("UpdateDate", "Home", FormMethod.Post, "Index"))
+					{
+						@Html.EditorFor(model => model.SelectedDate, "date", "newDate")
+						<input type="submit" value="Change Date"/>
+					}
+				</th>
+				<th style="width: 15%">
+					<div style="display:inline">
+						State
+					</div>
+					<div class="button-group" style="display:inline">
+						<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-cog"></span> <span class="caret"></span></button>
+						<ul class="dropdown-menu">
+							@using (Html.BeginForm("FilterStates", "Home", FormMethod.Post, "Index"))
+							{
+								<li>
+									<input type="submit" value="Apply Filter"/>
+
+									@Html.HiddenFor(m => m.SelectedDate)
+
+									@*I don't check comments like this into code. I'm only explaining my thought process here,
+										particularly why my handler for the filtering sucks so bad, given that this is a test.*@
+
+									@*This is needed to ensure the list isn't null, but it's still empty.
+										See my notes below on my struggles here.*@
+									@Html.HiddenFor(m => m.StateStatistics)
+
+									@*A blog I read said that to fix my problem, the foreach needs to be a simple for loop.
+										I tried that, and it didn't work. I do need the foreach to work off a sorted list if I'm to sort it inline here.*@
+									@foreach (var stateStat in Model.StateStatistics.OrderBy(stat => stat.State))
+									{
+										<li>
+											@*My issue is that the posted model always came back with an empty list.
+												I tried for a couple days to figure out why.
+												This didn't work, not even in combination with the stuff below*@
+											@*@Html.HiddenFor(m => m.StateStatistics[i])*@
+
+											@*Nor this*@
+											@*@Html.Hidden($"StateStatistics[{i}]", Model.StateStatistics[i])
+											@Html.Hidden($"StateStatistics[{i}].Date", Model.StateStatistics[i].Date)
+											@Html.Hidden($"StateStatistics[{i}].State", Model.StateStatistics[i].State)
+											@Html.Hidden($"StateStatistics[{i}].Total", Model.StateStatistics[i].Total)
+											@Html.Hidden($"StateStatistics[{i}].Positive", Model.StateStatistics[i].Positive)
+											@Html.Hidden($"StateStatistics[{i}].Negative", Model.StateStatistics[i].Negative)
+											@Html.Hidden($"StateStatistics[{i}].Hospitalized", Model.StateStatistics[i].Hospitalized)
+											@Html.Hidden($"StateStatistics[{i}].IsIncluded", Model.StateStatistics[i].IsIncluded)*@
+
+											@*Niether did this.*@
+											@*@Html.HiddenFor(m => Model.StateStatistics[i].Date)
+											@Html.DisplayFor(m => Model.StateStatistics[i].State)
+											@Html.HiddenFor(m => Model.StateStatistics[i].Total)
+											@Html.HiddenFor(m => Model.StateStatistics[i].Positive)
+											@Html.HiddenFor(m => Model.StateStatistics[i].Negative)
+											@Html.HiddenFor(m => Model.StateStatistics[i].Hospitalized)
+											@Html.EditorFor(m => Model.StateStatistics[i].IsIncluded, "checkbox")
+											@Html.DisplayFor(m => Model.StateStatistics[i].State)*@
+
+											@*Here's my work-around which creates far too many input parameters in a single method,
+												but it  works in a very annoying round-about way.
+												This is an aweful solution that I'd never use in production,
+												but I'm getting things working for the test without help on a less-familiar subject.
+												Instead of actually doing this for real, I'd ask for help from a more senior team member where Google failed.*@
+											@Html.EditorFor(m => m.ShowState[stateStat.State], "checkbox", $"Include_{stateStat.State}")
+											@Html.DisplayFor(m =>stateStat.State)
+										</li>
+									}
+								</li>
+							}
+						</ul>
+					</div>
+				</th>
+				<th style="width: 15%">Total</th>
+				<th style="width: 15%">Positive</th>
+				<th style="width: 15%">Negative</th>
+				<th style="width: 15%">Hospitalized</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var stateStats in Model.StateStatistics.Where(stat => Model.ShowState.ContainsKey(stat.State) ? Model.ShowState[stat.State] : true))
+			{
+				<tr>
+					<td>
+						@Html.DisplayFor(item => stateStats.Date)
+					</td>
+					<td>
+						@Html.DisplayFor(item => stateStats.State)
+					</td>
+					<td>
+						@Html.DisplayFor(item => stateStats.Total)
+					</td>
+					<td>
+						@Html.DisplayFor(item => stateStats.Positive)
+					</td>
+					<td>
+						@Html.DisplayFor(item => stateStats.Negative)
+					</td>
+					<td>
+						@Html.DisplayFor(item => stateStats.Hospitalized)
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
